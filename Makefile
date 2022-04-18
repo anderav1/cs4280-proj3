@@ -5,8 +5,8 @@
 
 CC = g++
 CFLAGS = -g -Wall -std=c++11
-OBJS = main.o parser.o scanner.o
-DEPS = parser.h scanner.h node.h token.h
+OBJS = main.o parser.o scanner.o semantics.o list.o
+DEPS = parser.h scanner.h semantics.h list.h node.h token.h
 TARGET = statSem
 
 $(TARGET): $(OBJS)

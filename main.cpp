@@ -8,7 +8,6 @@
 
 #include "node.h"
 #include "parser.h"
-#include "testTree.h"
 
 std::string fileName;
 
@@ -17,8 +16,6 @@ void printArgV(int, char*[]);
 
 int main(int argc, char* argv[]) {
   std::istream* fp;
-  
-  // TODO: implement static semantics
   
   if (argc == 0 || argc > 2) {
     printf("Fatal: Improper usage\nUsage:");
@@ -29,12 +26,11 @@ int main(int argc, char* argv[]) {
   else if (argc == 1) fp = &std::cin;
   
   node_t* root = parser(*fp);
-  printTree(root, 0);
+  
+  // TODO: call static semantic function on the tree
   
   if (fp != &std::cin) delete fp;
   deleteTree(root);
-  
-  std::cout << "Finished parsing" << std::endl;
   
   return 0;
 }

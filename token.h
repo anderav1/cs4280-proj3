@@ -42,9 +42,9 @@ const int finalStates[] = {
 };
 
 typedef struct token_t {
-  tokenID id;
-  std::string str;
-  int line;
+  tokenID id = ERR_TK;
+  std::string str = "";
+  int line = 0;
 } token_t;
 
 // Array of valid keywords

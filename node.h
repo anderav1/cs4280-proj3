@@ -9,7 +9,7 @@
 
 typedef struct node_t {
   std::string label;
-  std::string decor = "";
+  token_t decor;
   bool isLeaf = false;
   // children nodes
   node_t* ch1 = nullptr;

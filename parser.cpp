@@ -4,18 +4,22 @@
 
 #include <iostream>
 
+#include "list.h"
 #include "node.h"
 #include "parser.h"
 #include "scanner.h"
+#include "semantics.h"
 #include "token.h"
 
 #include <iostream>
 
 token_t tkn;
 std::istream* fp;
+list_t* symbolTable;
 
 node_t* parser(std::istream &input) {
   node_t* root;
+  symbolTable = createList();
 
   fp = &input;
   tkn = scanner(*fp);
@@ -23,6 +27,8 @@ node_t* parser(std::istream &input) {
   
   if (tkn.id != EOF_TK) error();
   else std::cout << "Successfully parsed program" << std::endl;
+  
+  deleteList(symbolTable);
   
   return root;
 }
@@ -50,7 +56,7 @@ node_t* getLeafNode(std::string label) {
   return node;
 }
 
-node_t* getDecoratedNode(std::string label, std::string decor) {
+node_t* getDecoratedNode(std::string label, token_t decor) {
   node_t* node = new node_t();
   node->label = label;
   node->isLeaf = true;
@@ -84,13 +90,16 @@ node_t* S() {
     node->ch1 = getLeafNode(tkn.str);
     tkn = scanner(*fp);
     if (tkn.id == ID_TK) {
-      node->ch2 = getDecoratedNode("Identifier", tkn.str);
+      // TODO: check id semantics
+      insert(symbolTable, tkn); //
+      node->ch2 = getDecoratedNode("Identifier", tkn);
       tkn = scanner(*fp);
       if (tkn.id == KEYWD_TK && tkn.str == "Spot") {
         node->ch3 = getLeafNode(tkn.str);
         tkn = scanner(*fp);
         if (tkn.id == ID_TK) {
-          node->ch4 = getDecoratedNode("Identifier", tkn.str);
+          insert(symbolTable, tkn); //
+          node->ch4 = getDecoratedNode("Identifier", tkn);
           tkn = scanner(*fp);
           node->ch5 = R();
           node->ch6 = E();
@@ -128,7 +137,8 @@ node_t* E() { // working
     node->ch1 = getLeafNode(tkn.str);
     tkn = scanner(*fp);
     if (tkn.id == ID_TK) {
-      node->ch2 = getDecoratedNode("Identifier", tkn.str);
+      if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+      node->ch2 = getDecoratedNode("Identifier", tkn);
       tkn = scanner(*fp);
     } else error();
   } else error();
@@ -137,14 +147,15 @@ node_t* E() { // working
 }
 
 // <A> -> Name Id
-node_t* A() { // working
+node_t* A() {
   node_t* node = getNode("<A>");
 
   if (tkn.id == KEYWD_TK && tkn.str == "Name") {
     node->ch1 = getLeafNode(tkn.str);
     tkn = scanner(*fp);
     if (tkn.id == ID_TK) {
-      node->ch2 = getDecoratedNode("Identifier", tkn.str);
+      insert(symbolTable, tkn); //
+      node->ch2 = getDecoratedNode("Identifier", tkn);
       tkn = scanner(*fp);
     } else error();
   } else error();
@@ -223,7 +234,8 @@ node_t* F() {
         node->ch2 = getLeafNode(tkn.str);
         tkn = scanner(*fp);
         if (tkn.id == ID_TK) {
-          node->ch3 = getDecoratedNode("Identifier", tkn.str);
+          if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+          node->ch3 = getDecoratedNode("Identifier", tkn);
           tkn = scanner(*fp);
           node->ch4 = T();
           node->ch5 = W();
@@ -262,7 +274,7 @@ node_t* G() {
     node->ch1 = getLeafNode(tkn.str);
     tkn = scanner(*fp);
     if (tkn.id == NUM_TK) {
-      node->ch2 = getDecoratedNode("Number", tkn.str);
+      node->ch2 = getDecoratedNode("Number", tkn);
       tkn = scanner(*fp);
       if (tkn.id == KEYWD_TK && tkn.str == "There") {
         node->ch3 = getLeafNode(tkn.str);
@@ -323,7 +335,8 @@ node_t* J() {
     node->ch1 = getLeafNode(tkn.str);
     tkn = scanner(*fp);
     if (tkn.id == ID_TK) {
-      node->ch2 = getDecoratedNode("Identifier", tkn.str);
+      if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+      node->ch2 = getDecoratedNode("Identifier", tkn);
       tkn = scanner(*fp);
       node->ch3 = D();
     } else error();
@@ -341,13 +354,13 @@ node_t* K() {
       node->ch1 = getLeafNode(tkn.str);
       tkn = scanner(*fp);
       if (tkn.id == NUM_TK) {
-        node->ch2 = getDecoratedNode("Number", tkn.str);
+        node->ch2 = getDecoratedNode("Number", tkn);
         tkn = scanner(*fp);
         if (tkn.id == KEYWD_TK && tkn.str == "Show") {
           node->ch3 = getLeafNode(tkn.str);
           tkn = scanner(*fp);
           if (tkn.id == NUM_TK) {
-            node->ch4 = getDecoratedNode("Number", tkn.str);
+            node->ch4 = getDecoratedNode("Number", tkn);
             tkn = scanner(*fp);
           } else error();
         } else error();
@@ -356,13 +369,15 @@ node_t* K() {
       node->ch1 = getLeafNode(tkn.str);
       tkn = scanner(*fp);
       if (tkn.id == ID_TK) {
-        node->ch2 = getDecoratedNode("Identifier", tkn.str);
+        if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+        node->ch2 = getDecoratedNode("Identifier", tkn);
         tkn = scanner(*fp);
         if (tkn.id == KEYWD_TK && tkn.str == "Show") {
           node->ch3 = getLeafNode(tkn.str);
           tkn = scanner(*fp);
           if (tkn.id == ID_TK) {
-            node->ch4 = getDecoratedNode("Identifier", tkn.str);
+            if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+            node->ch4 = getDecoratedNode("Identifier", tkn);
             tkn = scanner(*fp);
           } else error();
         } else error();
@@ -381,7 +396,8 @@ node_t* L() {
     node->ch1 = getLeafNode(tkn.str);
     tkn = scanner(*fp);
     if (tkn.id == ID_TK) {
-      node->ch2 = getDecoratedNode("Identifier", tkn.str);
+      if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+      node->ch2 = getDecoratedNode("Identifier", tkn);
       tkn = scanner(*fp);
     } else error();
   } else error();
@@ -394,7 +410,7 @@ node_t* W() {
   node_t* node = getNode("<W>");
 
   if (tkn.id == NUM_TK) {
-    node->ch1 = getDecoratedNode("Number", tkn.str);
+    node->ch1 = getDecoratedNode("Number", tkn);
     tkn = scanner(*fp);
     if (tkn.id == OP_TK) {
       if (tkn.str == ".") { // <W> -> Num .
@@ -403,7 +419,7 @@ node_t* W() {
       } else if (tkn.str == "+" || tkn.str == "%" || tkn.str == "&") { // <W> -> Num <V> Num
         node->ch2 = V();
         if (tkn.id == NUM_TK) {
-          node->ch3 = getDecoratedNode("Number", tkn.str);
+          node->ch3 = getDecoratedNode("Number", tkn);
           tkn = scanner(*fp);
         } else error();
       } else error();
@@ -418,10 +434,11 @@ node_t* Z() {
   node_t* node = getNode("<Z>");
   
   if (tkn.id == ID_TK) { // <Z> -> Id
-    node->ch1 = getDecoratedNode("Identifier", tkn.str);
+    if (!verify(symbolTable, tkn)) error(tkn, ID_UNDEFINED); //
+    node->ch1 = getDecoratedNode("Identifier", tkn);
     tkn = scanner(*fp);
   } else if (tkn.id == NUM_TK) { // <Z> -> Num
-    node->ch1 = getDecoratedNode("Number", tkn.str);
+    node->ch1 = getDecoratedNode("Number", tkn);
     tkn = scanner(*fp);
   } else error();
   
